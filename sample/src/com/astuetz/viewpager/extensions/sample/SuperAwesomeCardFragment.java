@@ -17,10 +17,10 @@ package com.astuetz.viewpager.extensions.sample;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.ListFragment;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -28,12 +28,12 @@ import android.widget.ArrayAdapter;
 
 import com.nineoldandroids.animation.ObjectAnimator;
 
-public class SuperAwesomeCardFragment extends ListFragment implements PixelScrollListener {
+public class SuperAwesomeCardFragment extends ListFragment implements PixelScrollDetector.PixelScrollListener {
     private static final String ARG_POSITION = "position";
-    private int            position;
-    private ScrollDelegate delegate;
-    private View           toolbarContainer;
-    private Toolbar        toolbar;
+    private int     position;
+    private View    toolbarContainer;
+    private Toolbar toolbar;
+    private final Handler handler = new Handler();
 
     public static SuperAwesomeCardFragment newInstance(int position) {
         SuperAwesomeCardFragment f = new SuperAwesomeCardFragment();
@@ -64,7 +64,6 @@ public class SuperAwesomeCardFragment extends ListFragment implements PixelScrol
         setListAdapter(adapter);
         setListShown(true);
 
-        delegate = new ScrollDelegate();
         getListView().setOnScrollListener(new PixelScrollDetector(this));
         getListView().setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -96,155 +95,6 @@ public class SuperAwesomeCardFragment extends ListFragment implements PixelScrol
                 ObjectAnimator.ofFloat(toolbarContainer, "translationY", 0).setDuration(100).start();
             }
         }
-    }
-
-    private static class ScrollDelegate implements AbsListView.OnScrollListener {
-        View    mFirstView;
-        boolean mScrollStarted;
-        int mFirstVisibleItem = -1;
-        int mFirstViewTop;
-        int mFirstViewTopAmount;
-        int mAnimationDirection;
-        private int newBottom;
-
-        @Override
-        public void onScrollStateChanged(final AbsListView view, final int scrollState) {
-            Log.v("TAG", "onScrollStateChanged: " + scrollState);
-
-            if (scrollState == 1) {
-                // scroll starting
-                if (view.getChildCount() > 0) {
-                    mFirstView = view.getChildAt(0);
-                    if (null == mFirstView) {
-                        return;
-                    }
-                    mFirstViewTop = mFirstView.getTop();
-                    mScrollStarted = true;
-                }
-                mFirstViewTopAmount = 0;
-                mAnimationDirection = 0;
-            } else if (scrollState == 0) {
-                // scroll ended
-                mFirstVisibleItem = -1;
-                mScrollStarted = false;
-            }
-        }
-
-        @Override
-        public void onScroll(
-            final AbsListView view, final int firstVisibleItem, final int visibleItemCount, final int totalItemCount) {
-            if (totalItemCount == 0 || !mScrollStarted) {
-                return;
-            }
-
-            boolean newChild;
-            int newTop;
-            int diff = 0;
-
-            if (mFirstVisibleItem != firstVisibleItem) {
-                mFirstVisibleItem = firstVisibleItem;
-                mFirstView = view.getChildAt(0);
-                if (null == mFirstView) {
-                    return;
-                }
-
-                Log.v("TAG", "OLD: " + mFirstViewTop + "x" + newBottom);
-                Log.v("TAG", "NEW: " + mFirstView.getTop() + "x" + mFirstView.getBottom());
-
-                diff = mFirstView.getTop() + newBottom;
-                Log.w("TAG", "diff: " + diff);
-
-                mFirstViewTop = mFirstView.getTop();
-                newTop = mFirstViewTop - (diff * 2);
-                newChild = true;
-
-            } else {
-                newTop = mFirstView.getTop();
-                newBottom = mFirstView.getBottom();
-            }
-
-            int delta = (mFirstViewTop - newTop);
-            Log.d("TAG", "delta: " + delta);
-
-            mFirstViewTopAmount += delta;
-            mFirstViewTop = newTop;
-
-            if (true) {
-                if (mFirstViewTopAmount > 0) {
-                    mAnimationDirection = 1;
-                } else {
-                    mAnimationDirection = -1;
-                }
-            }
-
-            //Log.d("TAG", "scrolled: " + mFirstViewTopAmount + ", direction: " + mAnimationDirection);
-
-        }
-    }
-
-    /**
-     * Created by budius on 16.05.14.
-     * This improves on Zsolt Safrany answer on stack-overflow (see link)
-     * by making it a detector that can be attached to any AbsListView.
-     * http://stackoverflow.com/questions/8471075/android-listview-find-the-amount-of-pixels-scrolled
-     */
-    public class PixelScrollDetector implements AbsListView.OnScrollListener {
-        private final PixelScrollListener listener;
-        private       View                mTrackedChild;
-        private       int                 mTrackedChildPrevPosition;
-        private       int                 mTrackedChildPrevTop;
-
-        public PixelScrollDetector(PixelScrollListener listener) {
-            this.listener = listener;
-        }
-
-        @Override
-        public void onScrollStateChanged(AbsListView view, int scrollState) {
-            // init the values every time the list is moving
-            if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL
-                || scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING) {
-                if (mTrackedChild == null) {
-                    syncState(view);
-                }
-            }
-            listener.onScrollStateChanged(scrollState);
-        }
-
-        @Override
-        public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-            if (mTrackedChild == null) {
-                // case we don't have any reference yet, try again here
-                syncState(view);
-            } else {
-                boolean childIsSafeToTrack =
-                    (mTrackedChild.getParent() == view) && (view.getPositionForView(mTrackedChild) == mTrackedChildPrevPosition);
-                if (childIsSafeToTrack) {
-                    int top = mTrackedChild.getTop();
-                    if (listener != null) {
-                        float deltaY = top - mTrackedChildPrevTop;
-                        listener.onScroll(view, deltaY);
-                    }
-                    // re-syncing the state make the tracked child change as the list scrolls,
-                    // and that gives a much higher true state for `childIsSafeToTrack`
-                    syncState(view);
-                } else {
-                    mTrackedChild = null;
-                }
-            }
-        }
-
-        private void syncState(AbsListView view) {
-            if (view.getChildCount() > 0) {
-                mTrackedChild = getChildInTheMiddle(view);
-                mTrackedChildPrevTop = mTrackedChild.getTop();
-                mTrackedChildPrevPosition = view.getPositionForView(mTrackedChild);
-            }
-        }
-
-        private View getChildInTheMiddle(AbsListView view) {
-            return view.getChildAt(view.getChildCount() / 2);
-        }
-
     }
 
     private class MyAdapter extends ArrayAdapter<String> {

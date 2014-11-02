@@ -11,28 +11,7 @@
 		android:layout_above="@+id/colors"
 		tools:context=".MainActivity" />
 
-	<!-- The toolbar -->
-	<LinearLayout
-		android:id="@+id/toolbar_container"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:orientation="vertical">
-
-		<android.support.v7.widget.Toolbar
-			android:id="@+id/toolbar"
-			android:layout_height="wrap_content"
-			android:layout_width="match_parent"
-			android:minHeight="?attr/actionBarSize"
-			style="@style/ToolBarStyle" />
-
-		<com.astuetz.PagerSlidingTabStrip
-			android:layout_below="@+id/toolbar"
-			android:id="@+id/tabs"
-			android:layout_width="match_parent"
-			android:layout_height="48dip"
-			style="@style/PageSlidingTabStripStyle"
-			android:background="@drawable/background_tabs" />
-	</LinearLayout>
+	<include layout="@layout/activity_toolbar" />
 
 	<LinearLayout
 		android:id="@+id/colors"
