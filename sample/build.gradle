@@ -3,6 +3,8 @@ apply plugin: 'android'
 dependencies {
     compile project(':library')
     compile 'com.android.support:appcompat-v7:21.0.0'
+    compile 'com.nineoldandroids:library:2.4.0'
+
 }
 
 android {

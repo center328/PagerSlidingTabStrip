@@ -45,6 +45,7 @@ public class MainActivity extends ActionBarActivity {
     private Drawable oldBackground = null;
     private int currentColor  = 0xFF666666;
     public Toolbar toolbar;
+    public View toolbarContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +53,7 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbarContainer = findViewById(R.id.toolbar_container);
         setSupportActionBar(toolbar);
 
         tabs = (PagerSlidingTabStrip) findViewById(R.id.tabs);
@@ -148,7 +150,6 @@ public class MainActivity extends ActionBarActivity {
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         currentColor = savedInstanceState.getInt("currentColor");
-        changeColor(currentColor);
     }
 
     private Drawable.Callback drawableCallback = new Drawable.Callback() {
