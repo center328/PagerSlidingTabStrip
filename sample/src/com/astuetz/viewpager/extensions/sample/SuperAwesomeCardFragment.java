@@ -13,62 +13,61 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.astuetz.viewpager.extensions.sample;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.util.TypedValue;
-import android.view.Gravity;
-import android.view.LayoutInflater;
+import android.support.v4.app.ListFragment;
+import android.support.v4.view.ViewCompat;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.FrameLayout.LayoutParams;
-import android.widget.TextView;
+import android.widget.AbsListView;
+import android.widget.ArrayAdapter;
 
-public class SuperAwesomeCardFragment extends Fragment {
+public class SuperAwesomeCardFragment extends ListFragment implements AbsListView.OnScrollListener {
+    private static final String ARG_POSITION = "position";
+    private int position;
 
-	private static final String ARG_POSITION = "position";
+    public static SuperAwesomeCardFragment newInstance(int position) {
+        SuperAwesomeCardFragment f = new SuperAwesomeCardFragment();
+        Bundle b = new Bundle();
+        b.putInt(ARG_POSITION, position);
+        f.setArguments(b);
+        return f;
+    }
 
-	private int position;
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-	public static SuperAwesomeCardFragment newInstance(int position) {
-		SuperAwesomeCardFragment f = new SuperAwesomeCardFragment();
-		Bundle b = new Bundle();
-		b.putInt(ARG_POSITION, position);
-		f.setArguments(b);
-		return f;
-	}
+        position = getArguments().getInt(ARG_POSITION);
+    }
 
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+    @Override
+    public void onViewCreated(final View view, final Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
-		position = getArguments().getInt(ARG_POSITION);
-	}
+        String[] objects = new String[100];
 
-	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        for (int i = 0; i < 100; i++) {
+            objects[i] = "ITEM " + i;
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, objects);
+        setListAdapter(adapter);
+        setListShown(true);
 
-		LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        getListView().setOnScrollListener(this);
+    }
 
-		FrameLayout fl = new FrameLayout(getActivity());
-		fl.setLayoutParams(params);
+    @Override
+    public void onScrollStateChanged(final AbsListView view, final int scrollState) {
 
-		final int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources()
-				.getDisplayMetrics());
+    }
 
-		TextView v = new TextView(getActivity());
-		params.setMargins(margin, margin, margin, margin);
-		v.setLayoutParams(params);
-		v.setLayoutParams(params);
-		v.setGravity(Gravity.CENTER);
-		v.setBackgroundResource(R.drawable.background_card);
-		v.setText("CARD " + (position + 1));
-
-		fl.addView(v);
-		return fl;
-	}
-
+    @Override
+    public void onScroll(final AbsListView view, final int firstVisibleItem, final int visibleItemCount, final int totalItemCount) {
+        Toolbar toolbar = ((MainActivity)getActivity()).toolbar;
+        //ViewCompat.setTranslationY(toolbar, -firstVisibleItem);
+    }
 }
