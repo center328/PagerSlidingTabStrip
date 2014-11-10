@@ -1,6 +1,8 @@
 <resources>
 
-	<style name="AppBaseTheme" parent="Theme.AppCompat.Light.NoActionBar"></style>
+	<style name="AppBaseTheme" parent="Theme.AppCompat.Light.NoActionBar">
+		<item name="actionBarTabSize">48dip</item>
+	</style>
 
 	<style name="AppTheme" parent="AppBaseTheme">
 		<item name="android:windowBackground">@color/background_window</item>
@@ -25,11 +27,11 @@
 
 	<style name="PageSlidingTabStripStyle">
 		<item name="android:textAppearance">@style/MyTextAppearance</item>
-		<item name="pstsIndicatorColor">@android:color/white</item>
+		<item name="pstsIndicatorColor">@color/colorPrimary</item>
 		<item name="pstsTabBackground">@drawable/page_sliding_background_selector</item>
-		<item name="pstsUnderlineHeight">0.6dip</item>
-		<item name="pstsUnderlineColor">#666666</item>
-		<item name="pstsDividerColor">#33ffffff</item>
+		<item name="pstsUnderlineHeight">2dip</item>
+		<item name="pstsUnderlineColor">@color/pstsUnderlineDividerColor</item>
+		<item name="pstsDividerColor">@color/pstsDividerColor</item>
 	</style>
 
 	<style name="MyTextAppearance" parent="TextAppearance.AppCompat.Light.Widget.PopupMenu.Small">

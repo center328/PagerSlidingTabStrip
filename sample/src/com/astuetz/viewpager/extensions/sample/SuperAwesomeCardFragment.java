@@ -18,22 +18,39 @@ package com.astuetz.viewpager.extensions.sample;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 
+import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.ObjectAnimator;
+
+import de.greenrobot.event.EventBus;
 
 public class SuperAwesomeCardFragment extends ListFragment implements PixelScrollDetector.PixelScrollListener {
     private static final String ARG_POSITION = "position";
-    private int     position;
+    private static final String TAG          = "SuperAwesomeCardFragment";
     private View    toolbarContainer;
     private Toolbar toolbar;
     private final Handler handler = new Handler();
+
+    static class OnScrollStateChanged {
+        final Fragment caller;
+        final float    translationY;
+        final boolean  opened;
+
+        OnScrollStateChanged(final Fragment caller, final float translationY) {
+            this.caller = caller;
+            this.translationY = translationY;
+            this.opened = translationY == 0;
+        }
+    }
 
     public static SuperAwesomeCardFragment newInstance(int position) {
         SuperAwesomeCardFragment f = new SuperAwesomeCardFragment();
@@ -43,10 +60,35 @@ public class SuperAwesomeCardFragment extends ListFragment implements PixelScrol
         return f;
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        position = getArguments().getInt(ARG_POSITION);
+    public void onEvent(OnScrollStateChanged event) {
+        if (event.caller != this) {
+            Log.i(TAG, "onEvent: " + this + ", opened: " + event.opened);
+            handleScrollPosition(event.translationY);
+        }
+    }
+
+    private void handleScrollPosition(final float position) {
+        Log.i(TAG, "handleScrollPosition: " + position);
+
+        if (getListView().getChildCount() > 0) {
+            if (getListView().getFirstVisiblePosition() == 0) {
+                View view = getListView().getChildAt(0);
+                int top = view.getTop();
+
+                Log.v(TAG, "top: " + top);
+
+                if (top != position) {
+                    Log.w(TAG, "ok, scrolling list to " + position);
+                    getListView().setSelectionFromTop(0, (int) position);
+                } else {
+                    Log.v(TAG, "top == position");
+                }
+            } else {
+                Log.v(TAG, "firstVisiblePosition > 0");
+            }
+        } else {
+            Log.v(TAG, "child count < 1");
+        }
     }
 
     @Override
@@ -64,7 +106,10 @@ public class SuperAwesomeCardFragment extends ListFragment implements PixelScrol
         setListAdapter(adapter);
         setListShown(true);
 
-        getListView().setOnScrollListener(new PixelScrollDetector(this));
+        if (null != toolbarContainer) {
+            getListView().setOnScrollListener(new PixelScrollDetector(this));
+        }
+
         getListView().setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(final View v) {
@@ -72,6 +117,27 @@ public class SuperAwesomeCardFragment extends ListFragment implements PixelScrol
             }
         });
 
+        EventBus.getDefault().register(this);
+
+        Log.v(TAG, "handler: " + getView().getHandler());
+
+        if (null != toolbarContainer) {
+            if (null != handler) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        handleScrollPosition(ViewCompat.getTranslationY(toolbarContainer));
+                    }
+                });
+
+            }
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
@@ -82,17 +148,57 @@ public class SuperAwesomeCardFragment extends ListFragment implements PixelScrol
         ViewCompat.setTranslationY(toolbarContainer, translationY);
     }
 
+    ObjectAnimator animator;
+
     @Override
     public void onScrollStateChanged(final int scrollState) {
         if (scrollState == 0) {
-            final View toolbarContainer = ((MainActivity) getActivity()).toolbarContainer;
-            final View toolbar = ((MainActivity) getActivity()).toolbar;
             int height = toolbar.getHeight();
-
             float translationY = ViewCompat.getTranslationY(toolbarContainer);
 
-            if (translationY > -height) {
-                ObjectAnimator.ofFloat(toolbarContainer, "translationY", 0).setDuration(100).start();
+            if (null == animator) {
+                animator = ObjectAnimator.ofFloat(toolbarContainer, "translationY", 0);
+                animator.addListener(new Animator.AnimatorListener() {
+                    boolean isCancelled;
+
+                    @Override
+                    public void onAnimationStart(final Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationEnd(final Animator animation) {
+                        if (!isCancelled) {
+                            Log.v(TAG, "onAnimationEnd");
+                            EventBus.getDefault()
+                                .post(new OnScrollStateChanged(SuperAwesomeCardFragment.this,
+                                                               ViewCompat.getTranslationY(toolbarContainer)));
+                        }
+                    }
+
+                    @Override
+                    public void onAnimationCancel(final Animator animation) {
+                        isCancelled = true;
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(final Animator animation) {
+
+                    }
+                });
+                animator.setDuration(100);
+            }
+
+            if (translationY > -height / 2) {
+                animator.setFloatValues(0);
+            } else {
+                animator.setFloatValues(-height);
+            }
+            animator.start();
+
+        } else {
+            if (null != animator) {
+                animator.cancel();
             }
         }
     }
@@ -109,6 +215,11 @@ public class SuperAwesomeCardFragment extends ListFragment implements PixelScrol
         }
 
         @Override
+        public long getItemId(final int position) {
+            return position;
+        }
+
+        @Override
         public int getViewTypeCount() {
             return 2;
         }
@@ -118,11 +229,11 @@ public class SuperAwesomeCardFragment extends ListFragment implements PixelScrol
         }
 
         @Override
-        public View getView(final int position, final View convertView, final ViewGroup parent) {
+        public View getView(final int position, View convertView, final ViewGroup parent) {
             View view = super.getView(position, convertView, parent);
-            if (position == 0) {
+            if (position == 0 && null == convertView) {
                 view.setLayoutParams(new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                                                                  toolbarContainer.getHeight()));
+                                                                  ((MainActivity) getActivity()).getToolBarContainerHeight()));
             }
             return view;
         }

@@ -12,16 +12,15 @@
 
 	<android.support.v7.widget.Toolbar
 		android:id="@+id/toolbar"
-		android:layout_height="wrap_content"
+		android:layout_height="?attr/actionBarSize"
 		android:layout_width="match_parent"
-		android:minHeight="?attr/actionBarSize"
 		style="@style/ToolBarStyle" />
 
 	<com.astuetz.PagerSlidingTabStrip
 		android:layout_below="@+id/toolbar"
 		android:id="@+id/tabs"
 		android:layout_width="match_parent"
-		android:layout_height="48dip"
+		android:layout_height="?attr/actionBarTabSize"
 		style="@style/PageSlidingTabStripStyle"
 		android:background="@drawable/background_tabs" />
 </LinearLayout>

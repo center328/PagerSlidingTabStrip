@@ -5,6 +5,8 @@
 	<color name="colorPrimary">#FF339933</color>
 	<color name="colorPrimaryDark">#FF006600</color>
 	<color name="colorAccent">#336699</color>
-	<color name="tabColorNormal">#99ffffff</color>
-	<color name="tabColorSelected">#FFFFFF</color>
+	<color name="tabColorNormal">#66339933</color>
+	<color name="pstsDividerColor">#66339933</color>
+	<color name="pstsUnderlineDividerColor">#ffcccccc</color>
+	<color name="tabColorSelected">@color/colorPrimary</color>
 </resources>
